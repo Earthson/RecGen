@@ -74,6 +74,7 @@ if __name__ == '__main__':
             yield n
         else:
             yield (yield RecTask(fib, n-1)) + (yield RecTask(fib, n-2))
-    pfib = rec_gen(fib, lambda x: print(x))
-    for i in range(17):
-        pfib(i)
+    pfib = rec_gen(fib, lambda x: x)
+    for t in range(100):
+        for i in range(15):
+            pfib(i)
