@@ -32,26 +32,7 @@ def rec_gen(func, callback=None, err_callback=None):
                     ans.append(em)
                     go_through(None)
                 else:
-                    try_count = 0
-                    def todo_next(try_limit=10):
-                        '''
-                        child proc with retry
-                        '''
-                        nonlocal try_count
-                        if try_count < try_limit:
-                            try_count += 1
-                            if try_count > 1:
-                                print('@retry:# try_count: %s' % try_count, file=sys.stderr)
-                            em.dojob(callback=go_through, err_callback=todo_next)
-                        else:
-                            #raise Exception('can not recover error after %s retrys' % try_limit)
-                            print('@rec_recover_failed: after try %s time at one node' % try_limit, file=sys.stderr)
-                            print('@task is complete failed:(')
-                            if err_callback is not None:
-                                #let the task tree fail
-                                g.close()
-                                err_callback(0)
-                    todo_next(10)
+                    em.dojob(callback=go_through, err_callback=partial(error_do, Exception('Child task failed')))
             except StopIteration as st:
                 if callback is not None:
                     callback(*ans)
@@ -87,12 +68,12 @@ class RecTask(object):
 
 
 if __name__ == '__main__':
-    sys.setrecursionlimit(100000)
+    sys.setrecursionlimit(10000000)
     def fib(n):
         if n <= 1:
             yield n
         else:
             yield (yield RecTask(fib, n-1)) + (yield RecTask(fib, n-2))
     pfib = rec_gen(fib, lambda x: print(x))
-    for i in range(15):
+    for i in range(17):
         pfib(i)
